@@ -4,6 +4,8 @@ A small teaching tool that steps through JavaScript and shows how work moves bet
 
 Inspired by tools like Loupe — built to make interview-style `setTimeout` / Promise ordering obvious.
 
+**Demo:** [js-event-loop-analyser.vercel.app](https://js-event-loop-analyser.vercel.app/)
+
 ## Run locally
 
 ```bash
