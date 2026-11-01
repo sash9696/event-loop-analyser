@@ -33,11 +33,11 @@ export default function App() {
     <div className={`app${watching && focusMode && !editing ? " app--focus" : ""}`}>
       <header className="topbar">
         <div className="brand">
-          <p className="brand__name">Event Loop Analyser</p>
+          <h1 className="brand__name">Event Loop Analyser</h1>
           <p className="brand__tag">
             {watching && focusMode && !editing
               ? "Focus mode — editor hidden"
-              : "Watch one place at a time"}
+              : "JavaScript event loop visualizer — stack, microtasks, macrotasks"}
           </p>
         </div>
         <div className="controls">
@@ -203,6 +203,23 @@ export default function App() {
           ) : null}
         </section>
       </main>
+
+      <footer className="site-footer">
+        <p>
+          Free JavaScript event loop visualizer for interviews and teaching —
+          call stack, Web APIs, microtask queue, and callback queue.
+        </p>
+        <p>
+          <a
+            href="https://github.com/sash9696/event-loop-analyser"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
+          {" · "}
+          MIT License
+        </p>
+      </footer>
     </div>
   );
 }

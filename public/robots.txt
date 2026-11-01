@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://js-event-loop-analyser.vercel.app/sitemap.xml

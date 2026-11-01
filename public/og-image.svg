@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Event Loop Analyser">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8eef2"/>
+      <stop offset="100%" stop-color="#d5e2ea"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="72" y="72" width="1056" height="486" rx="16" fill="#f7fafc" stroke="#b7c5d0" stroke-width="2"/>
+  <text x="110" y="190" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="54" font-weight="600" fill="#14212b">Event Loop Analyser</text>
+  <text x="110" y="260" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="32" fill="#5a6b78">JavaScript event loop visualizer</text>
+  <g font-family="IBM Plex Mono, Menlo, monospace" font-size="22" fill="#14212b">
+    <rect x="110" y="320" width="220" height="56" rx="8" fill="#fff" stroke="#1f6f8b" stroke-width="3"/>
+    <text x="130" y="355">Call Stack</text>
+    <rect x="350" y="320" width="220" height="56" rx="8" fill="#fff" stroke="#b44d12" stroke-width="3"/>
+    <text x="385" y="355">Web APIs</text>
+    <rect x="590" y="320" width="240" height="56" rx="8" fill="#fff" stroke="#6b4f2f" stroke-width="3"/>
+    <text x="610" y="355">Microtasks</text>
+    <rect x="850" y="320" width="240" height="56" rx="8" fill="#fff" stroke="#2f6b4f" stroke-width="3"/>
+    <text x="875" y="355">Callback Q</text>
+  </g>
+  <text x="110" y="460" font-family="IBM Plex Sans, Helvetica, Arial, sans-serif" font-size="24" fill="#5a6b78">Promise.then before setTimeout(0)  step through it live</text>
+  <text x="110" y="510" font-family="IBM Plex Mono, Menlo, monospace" font-size="20" fill="#1f6f8b">js-event-loop-analyser.vercel.app</text>
+</svg>

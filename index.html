@@ -2,12 +2,146 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Event Loop Analyser</title>
+
+    <title>
+      JavaScript Event Loop Visualizer — Call Stack, Promises &amp; Microtasks |
+      Event Loop Analyser
+    </title>
+    <meta
+      name="description"
+      content="Free interactive JavaScript event loop visualizer. Step through call stack, Web APIs, microtask queue, and callback queue. See why Promise.then runs before setTimeout(0). Open source."
+    />
+    <meta
+      name="keywords"
+      content="javascript event loop visualizer, event loop analyser, promise vs setTimeout, microtask queue, call stack visualizer, queueMicrotask, javascript interview prep, loupe alternative"
+    />
+    <meta name="author" content="Event Loop Analyser" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#1f6f8b" />
+    <link rel="canonical" href="https://js-event-loop-analyser.vercel.app/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Event Loop Analyser" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:url" content="https://js-event-loop-analyser.vercel.app/" />
+    <meta
+      property="og:title"
+      content="JavaScript Event Loop Visualizer — Event Loop Analyser"
+    />
+    <meta
+      property="og:description"
+      content="Step through the JS event loop: call stack, Web APIs, microtasks, and the callback queue. Free and open source."
+    />
+    <meta
+      property="og:image"
+      content="https://js-event-loop-analyser.vercel.app/og-image.svg"
+    />
+    <meta property="og:image:alt" content="Event Loop Analyser — JavaScript event loop visualizer" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="JavaScript Event Loop Visualizer — Event Loop Analyser"
+    />
+    <meta
+      name="twitter:description"
+      content="Step through call stack, microtasks, and macrotasks. See Promise vs setTimeout ordering live."
+    />
+    <meta
+      name="twitter:image"
+      content="https://js-event-loop-analyser.vercel.app/og-image.svg"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebApplication",
+            "@id": "https://js-event-loop-analyser.vercel.app/#app",
+            "name": "Event Loop Analyser",
+            "alternateName": [
+              "JavaScript Event Loop Visualizer",
+              "JS Event Loop Analyser"
+            ],
+            "url": "https://js-event-loop-analyser.vercel.app/",
+            "description": "Interactive JavaScript event loop visualizer for the call stack, Web APIs, microtask queue, and callback queue. Step through Promise.then, queueMicrotask, and setTimeout ordering.",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "featureList": [
+              "Call stack visualization",
+              "Web APIs and setTimeout",
+              "Microtask queue for Promises and queueMicrotask",
+              "Callback queue for macrotasks",
+              "Step, pause, and speed controls",
+              "Interview-style presets"
+            ],
+            "softwareLicense": "https://opensource.org/licenses/MIT",
+            "codeRepository": "https://github.com/sash9696/event-loop-analyser"
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://js-event-loop-analyser.vercel.app/#website",
+            "url": "https://js-event-loop-analyser.vercel.app/",
+            "name": "Event Loop Analyser",
+            "description": "Free JavaScript event loop visualizer and analyser",
+            "inLanguage": "en"
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Does Promise.then run before setTimeout(0)?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. After synchronous code finishes, the JavaScript engine drains the microtask queue (Promise.then, queueMicrotask) before the next macrotask such as setTimeout."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is a JavaScript event loop visualizer?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A tool that shows how work moves between the call stack, Web APIs, microtask queue, and callback queue so you can see async ordering instead of only reading about it."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <main style="max-width: 40rem; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; line-height: 1.5">
+        <h1>Event Loop Analyser — JavaScript Event Loop Visualizer</h1>
+        <p>
+          Free interactive tool to visualize the JavaScript event loop: call
+          stack, Web APIs, microtask queue (Promises, queueMicrotask), and
+          callback queue (setTimeout). Step through code to see why microtasks
+          run before macrotasks.
+        </p>
+        <p>
+          Enable JavaScript to use the live visualizer, or view the
+          <a href="https://github.com/sash9696/event-loop-analyser"
+            >open-source repository</a
+          >.
+        </p>
+      </main>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
