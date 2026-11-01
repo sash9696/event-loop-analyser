@@ -1,6 +1,6 @@
 # Event Loop Analyser
 
-A small teaching tool that steps through JavaScript and shows how work moves between the **call stack**, **Web APIs**, **callback queue**, and (soon) the **microtask queue**.
+A small teaching tool that steps through JavaScript and shows how work moves between the **call stack**, **Web APIs**, **microtask queue**, and **callback queue**.
 
 Inspired by tools like Loupe — built to make interview-style `setTimeout` / Promise ordering obvious.
 
@@ -19,14 +19,17 @@ npm run build
 
 - Sync execution on the call stack
 - `setTimeout` → Web APIs → callback queue → stack
+- Promises / `queueMicrotask` → microtask queue (drained before macrotasks)
 - Focus mode, step/pause, speed control
 - Labels like `timeout #1 · Timeout 1` so anonymous callbacks stay readable
 
 ## Roadmap
 
-- [ ] Promises / `queueMicrotask` (microtask queue)
-- [ ] `async` / `await` as sugar over Promises
-- [ ] Embeddable build for learning platforms
+See [docs/ROADMAP.md](./docs/ROADMAP.md).
+
+- [x] Phase 1 — stack, Web APIs, callback queue, `setTimeout`
+- [x] Phase 2 — Promises + microtask queue (`then`, `queueMicrotask`)
+- [ ] Later — `async`/`await`, CrackIt embed, other JS labs
 
 ## How it’s built
 

@@ -11,7 +11,7 @@ import { DEFAULT_CODE, PRESETS } from "./presets";
 export default function App() {
   const [code, setCode] = useState(DEFAULT_CODE);
   const [editing, setEditing] = useState(false);
-  const [focusMode, setFocusMode] = useState(true);
+  const [focusMode, setFocusMode] = useState(false);
   const playback = usePlayback(code);
   const focus = deriveFocus(
     playback.status,
@@ -147,6 +147,10 @@ export default function App() {
                 {playback.error}
               </p>
             ) : null}
+            <ConsolePanel
+              lines={playback.snapshot.console}
+              focused={focus.zone === "console"}
+            />
           </section>
         ) : null}
 
@@ -179,16 +183,24 @@ export default function App() {
               focused={focus.zone === "loop"}
             />
             <Panel
+              title="Microtask Queue"
+              items={playback.snapshot.microtaskQueue}
+              variant="micro"
+              focused={focus.zone === "micro"}
+            />
+            <Panel
               title="Callback Queue"
               items={playback.snapshot.callbackQueue}
               variant="queue"
               focused={focus.zone === "queue"}
             />
+          </div>
+          {!showEditor ? (
             <ConsolePanel
               lines={playback.snapshot.console}
               focused={focus.zone === "console"}
             />
-          </div>
+          ) : null}
         </section>
       </main>
     </div>

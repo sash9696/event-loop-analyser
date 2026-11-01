@@ -1,7 +1,14 @@
 import type { SimEvent } from "../sim/types";
 import type { PanelSnapshot, PlaybackStatus } from "./types";
 
-export type FocusZone = "stack" | "api" | "queue" | "loop" | "console" | null;
+export type FocusZone =
+  | "stack"
+  | "api"
+  | "micro"
+  | "queue"
+  | "loop"
+  | "console"
+  | null;
 
 export type FocusState = {
   zone: FocusZone;
@@ -62,6 +69,16 @@ export function deriveFocus(
       return {
         zone: "loop",
         now: `Event loop: moving ${currentEvent.label} → call stack`,
+      };
+    case "enqueueMicrotask":
+      return {
+        zone: "micro",
+        now: `Microtask queue: ${currentEvent.label} is waiting`,
+      };
+    case "dequeueMicrotask":
+      return {
+        zone: "loop",
+        now: `Event loop: draining microtask ${currentEvent.label} → call stack`,
       };
     default:
       return { zone: null, now: snapshot.transit?.name ?? "…" };

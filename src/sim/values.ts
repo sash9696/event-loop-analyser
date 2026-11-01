@@ -15,6 +15,21 @@ export type FnValue = {
   line?: number;
 };
 
+export type PromiseReaction = {
+  onFulfilled?: FnValue;
+  onRejected?: FnValue;
+  derived: PromiseValue;
+  label: string;
+};
+
+export type PromiseValue = {
+  kind: "promise";
+  id: string;
+  state: "pending" | "fulfilled" | "rejected";
+  result: Value;
+  reactions: PromiseReaction[];
+};
+
 export type Value =
   | { kind: "undefined" }
   | { kind: "null" }
@@ -22,7 +37,14 @@ export type Value =
   | { kind: "number"; value: number }
   | { kind: "string"; value: string }
   | FnValue
-  | { kind: "native"; name: "console.log" | "setTimeout" }
+  | PromiseValue
+  | { kind: "native"; name: "console.log" | "setTimeout" | "queueMicrotask" }
+  | { kind: "promiseCtor" }
+  | {
+      kind: "promiseMethod";
+      method: "then" | "catch" | "resolve" | "reject";
+      target?: PromiseValue;
+    }
   | { kind: "object"; name: "console" };
 
 export const UNDEFINED: Value = { kind: "undefined" };
@@ -44,8 +66,14 @@ export function valueToLogString(value: Value): string {
       return value.value;
     case "fn":
       return value.name ? `[Function: ${value.name}]` : "[Function]";
+    case "promise":
+      return `[Promise ${value.state}]`;
     case "native":
       return `[Native: ${value.name}]`;
+    case "promiseCtor":
+      return "[Function: Promise]";
+    case "promiseMethod":
+      return `[Promise.${value.method}]`;
     case "object":
       return `[Object: ${value.name}]`;
   }

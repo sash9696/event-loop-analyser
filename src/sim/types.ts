@@ -13,7 +13,9 @@ export type SimEvent =
     }
   | { type: "timerReady"; id: string; label: string }
   | { type: "enqueueTask"; id: string; name: string; label: string }
-  | { type: "dequeueTask"; id: string; name: string; label: string };
+  | { type: "dequeueTask"; id: string; name: string; label: string }
+  | { type: "enqueueMicrotask"; id: string; name: string; label: string }
+  | { type: "dequeueMicrotask"; id: string; name: string; label: string };
 
 export type SimulationResult = {
   console: string[];
@@ -24,4 +26,6 @@ export type SimulationResult = {
 export type RunSimulationOptions = {
   /** Max interpreter steps before aborting (runaway loops / recursion). */
   maxSteps?: number;
+  /** Max microtasks drained in one checkpoint. */
+  maxMicrotasks?: number;
 };

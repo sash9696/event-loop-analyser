@@ -4,7 +4,7 @@ type PanelProps = {
   title: string;
   items: FrameItem[];
   emptyLabel?: string;
-  variant?: "stack" | "queue" | "api";
+  variant?: "stack" | "queue" | "api" | "micro";
   focused?: boolean;
   count?: number;
 };

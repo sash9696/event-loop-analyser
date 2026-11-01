@@ -56,6 +56,35 @@ console.log("C");
 console.log("sync");
 `,
   },
+  {
+    id: "promise-vs-timeout",
+    label: "Promise vs timeout",
+    code: `console.log("s1");
+setTimeout(() => console.log("macro"), 0);
+Promise.resolve().then(() => console.log("micro"));
+console.log("s2");
+`,
+  },
+  {
+    id: "micro-in-macro",
+    label: "Micro inside macro",
+    code: `setTimeout(() => {
+  console.log("macro-start");
+  Promise.resolve().then(() => console.log("micro-in-macro"));
+  console.log("macro-end");
+}, 0);
+Promise.resolve().then(() => console.log("micro-first"));
+`,
+  },
+  {
+    id: "queue-microtask",
+    label: "queueMicrotask",
+    code: `queueMicrotask(() => console.log("q"));
+Promise.resolve().then(() => console.log("p"));
+setTimeout(() => console.log("macro"), 0);
+console.log("s");
+`,
+  },
 ];
 
 export const DEFAULT_CODE = PRESETS[0]!.code;

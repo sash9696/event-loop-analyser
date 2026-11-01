@@ -5,6 +5,7 @@ function cloneSnapshot(snapshot: PanelSnapshot): PanelSnapshot {
   return {
     callStack: snapshot.callStack.map((item) => ({ ...item })),
     webApis: snapshot.webApis.map((item) => ({ ...item })),
+    microtaskQueue: snapshot.microtaskQueue.map((item) => ({ ...item })),
     callbackQueue: snapshot.callbackQueue.map((item) => ({ ...item })),
     transit: snapshot.transit ? { ...snapshot.transit } : null,
     console: [...snapshot.console],
@@ -17,6 +18,7 @@ export function emptySnapshot(): PanelSnapshot {
   return {
     callStack: [],
     webApis: [],
+    microtaskQueue: [],
     callbackQueue: [],
     transit: null,
     console: [],
@@ -99,6 +101,29 @@ export function applyEvent(
             id: event.id,
             name: event.label,
             detail: "moving to call stack",
+          };
+      next.loopTransfer = true;
+      break;
+    }
+    case "enqueueMicrotask":
+      next.microtaskQueue.push({
+        id: event.id,
+        name: event.label,
+        detail: "microtask",
+      });
+      break;
+    case "dequeueMicrotask": {
+      const idx = next.microtaskQueue.findIndex((item) => item.id === event.id);
+      const frame =
+        idx >= 0
+          ? next.microtaskQueue.splice(idx, 1)[0]!
+          : next.microtaskQueue.shift();
+      next.transit = frame
+        ? { ...frame, id: `transit-micro-${event.id}` }
+        : {
+            id: event.id,
+            name: event.label,
+            detail: "microtask → call stack",
           };
       next.loopTransfer = true;
       break;

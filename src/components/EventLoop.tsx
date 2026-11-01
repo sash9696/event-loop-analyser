@@ -32,7 +32,9 @@ export function EventLoop({ phase, transit, focused = false }: EventLoopProps) {
           </div>
         </div>
       ) : (
-        <p className="event-loop__hint">Moves one callback when the stack is empty</p>
+        <p className="event-loop__hint">
+          Empty stack → drain microtasks → next macrotask
+        </p>
       )}
     </div>
   );

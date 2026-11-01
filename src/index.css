@@ -11,6 +11,7 @@
   --stack: #1f6f8b;
   --api: #b44d12;
   --queue: #2f6b4f;
+  --micro: #6b4f2f;
   --console: #243447;
   --danger: #9b1c1c;
   --focus: #1f6f8b;
@@ -189,8 +190,8 @@ textarea {
 
 .editor {
   width: 100%;
-  flex: 1;
-  min-height: 280px;
+  flex: 1.4;
+  min-height: 180px;
   resize: none;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -200,6 +201,12 @@ textarea {
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.92rem;
   line-height: 1.5;
+}
+
+.editor-pane .panel--console {
+  flex: 0.85;
+  min-height: 140px;
+  max-height: 42%;
 }
 
 .editor:focus {
@@ -265,14 +272,19 @@ textarea {
   min-height: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(0, 1.2fr) auto minmax(0, 1fr) minmax(0, 0.75fr);
+  grid-template-rows: minmax(0, 1.2fr) auto minmax(0, 1fr);
   grid-template-areas:
     "stack api"
     "loop loop"
-    "queue queue"
-    "console console";
+    "micro queue";
   gap: var(--space);
   align-content: stretch;
+}
+
+.viz-pane > .panel--console {
+  flex: 0 0 auto;
+  min-height: 120px;
+  max-height: 28%;
 }
 
 .panel {
@@ -316,8 +328,12 @@ textarea {
   border-top: 3px solid var(--queue);
 }
 
+.panel--micro {
+  grid-area: micro;
+  border-top: 3px solid var(--micro);
+}
+
 .panel--console {
-  grid-area: console;
   border-top: 3px solid var(--console);
 }
 
@@ -433,6 +449,10 @@ textarea {
 
 .panel--queue .frame {
   border-left: 3px solid var(--queue);
+}
+
+.panel--micro .frame {
+  border-left: 3px solid var(--micro);
 }
 
 .event-loop {

@@ -74,6 +74,28 @@ describe("Player timeline → panels", () => {
     expect(snap.transit?.name).toContain("timeout #1");
     expect(snap.transit?.name).toContain("B");
   });
+
+  it("tracks microtask queue before drain", () => {
+    const sim = runSimulation(`
+      Promise.resolve().then(() => console.log("micro"));
+      console.log("s");
+    `);
+    const enqueueIndex = sim.timeline.findIndex(
+      (e) => e.type === "enqueueMicrotask",
+    );
+    expect(enqueueIndex).toBeGreaterThanOrEqual(0);
+    const before = snapshotAt(sim.timeline, enqueueIndex);
+    expect(before.microtaskQueue.length).toBe(1);
+    expect(before.callbackQueue.length).toBe(0);
+
+    const dequeueIndex = sim.timeline.findIndex(
+      (e) => e.type === "dequeueMicrotask",
+    );
+    const during = snapshotAt(sim.timeline, dequeueIndex);
+    expect(during.loopTransfer).toBe(true);
+    expect(during.microtaskQueue).toEqual([]);
+    expect(during.transit?.name).toBeTruthy();
+  });
 });
 
 

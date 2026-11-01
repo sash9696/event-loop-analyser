@@ -12,7 +12,7 @@ src/sim/runSimulation(source)
       │
       ▼
 src/player/          snapshotAt(timeline, cursor)
-      │  stack / webApis / queue / transit / console
+      │  stack / webApis / microtaskQueue / queue / transit / console
       ▼
 React UI (panels + Now banner + focus spotlight)
 ```
@@ -31,8 +31,11 @@ Important outputs:
 | `timerReady` | Delay elapsed |
 | `enqueueTask` | Macrotask waiting in callback queue |
 | `dequeueTask` | Event loop moves one task toward the stack |
+| `enqueueMicrotask` / `dequeueMicrotask` | Promise / `queueMicrotask` jobs |
 
 Timers get stable labels (`timeout #N`) and an optional hint from the callback’s first string `console.log`.
+
+Whenever the stack is empty, the simulator drains the microtask queue before the next macrotask.
 
 ## Player (`src/player/`)
 

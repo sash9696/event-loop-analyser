@@ -22,6 +22,8 @@ import {
   valueToLogString,
   type Env,
   type FnValue,
+  type PromiseReaction,
+  type PromiseValue,
   type Value,
 } from "./values";
 
@@ -39,6 +41,13 @@ type TaskRecord = {
   callback: FnValue;
   name: string;
   label: string;
+};
+
+type MicrotaskRecord = {
+  id: string;
+  name: string;
+  label: string;
+  run: () => void;
 };
 
 class ReturnSignal {
@@ -65,15 +74,21 @@ export class Interpreter {
   private now = 0;
   private steps = 0;
   private nextTimerId = 1;
+  private nextPromiseId = 1;
+  private nextMicroId = 1;
   private timers: TimerRecord[] = [];
   private taskQueue: TaskRecord[] = [];
+  private microtaskQueue: MicrotaskRecord[] = [];
   private stackDepth = 0;
+  private microtasksDrained = 0;
   private program: Program;
   private maxSteps: number;
+  private maxMicrotasks: number;
 
-  constructor(program: Program, maxSteps: number) {
+  constructor(program: Program, maxSteps: number, maxMicrotasks = 10_000) {
     this.program = program;
     this.maxSteps = maxSteps;
+    this.maxMicrotasks = maxMicrotasks;
   }
 
   run(): void {
@@ -98,6 +113,11 @@ export class Interpreter {
     const env = createEnv(null);
     envDefine(env, "console", { kind: "object", name: "console" });
     envDefine(env, "setTimeout", { kind: "native", name: "setTimeout" });
+    envDefine(env, "queueMicrotask", {
+      kind: "native",
+      name: "queueMicrotask",
+    });
+    envDefine(env, "Promise", { kind: "promiseCtor" });
     return env;
   }
 
@@ -162,18 +182,53 @@ export class Interpreter {
     };
   }
 
+  private enqueueMicrotask(
+    name: string,
+    label: string,
+    run: () => void,
+  ): void {
+    const id = String(this.nextMicroId++);
+    this.emit({ type: "enqueueMicrotask", id, name, label });
+    this.microtaskQueue.push({ id, name, label, run });
+  }
+
+  private drainMicrotasks(): void {
+    while (this.microtaskQueue.length > 0 && !this.error) {
+      this.microtasksDrained += 1;
+      if (this.microtasksDrained > this.maxMicrotasks) {
+        throw new Error(
+          `Microtask budget exceeded (${this.maxMicrotasks})`,
+        );
+      }
+      const job = this.microtaskQueue.shift()!;
+      this.emit({
+        type: "dequeueMicrotask",
+        id: job.id,
+        name: job.name,
+        label: job.label,
+      });
+      job.run();
+    }
+  }
+
   private drainEventLoop(): void {
     while (!this.error) {
+      this.drainMicrotasks();
       this.fireReadyTimers();
 
       if (this.taskQueue.length === 0) {
         const next = this.nextPendingTimer();
-        if (!next) break;
+        if (!next) {
+          this.drainMicrotasks();
+          if (this.taskQueue.length === 0 && !this.nextPendingTimer()) break;
+          continue;
+        }
         this.now = next.due;
         this.fireReadyTimers();
       }
 
-      if (this.taskQueue.length === 0) break;
+      this.drainMicrotasks();
+      if (this.taskQueue.length === 0) continue;
       if (this.stackDepth !== 0) {
         throw new Error("Invariant: task dequeued while stack non-empty");
       }
@@ -218,6 +273,135 @@ export class Interpreter {
     }
   }
 
+  private createPromise(state: PromiseValue["state"] = "pending"): PromiseValue {
+    return {
+      kind: "promise",
+      id: String(this.nextPromiseId++),
+      state,
+      result: UNDEFINED,
+      reactions: [],
+    };
+  }
+
+  private fulfillPromise(promise: PromiseValue, value: Value): void {
+    if (promise.state !== "pending") return;
+    promise.state = "fulfilled";
+    promise.result = value;
+    this.flushReactions(promise);
+  }
+
+  private rejectPromise(promise: PromiseValue, reason: Value): void {
+    if (promise.state !== "pending") return;
+    promise.state = "rejected";
+    promise.result = reason;
+    this.flushReactions(promise);
+  }
+
+  private resolvePromise(promise: PromiseValue, value: Value): void {
+    if (value.kind === "promise") {
+      if (value === promise) {
+        this.rejectPromise(promise, {
+          kind: "string",
+          value: "TypeError: Chaining cycle detected",
+        });
+        return;
+      }
+      const link = () => {
+        if (value.state === "fulfilled") {
+          this.resolvePromise(promise, value.result);
+        } else if (value.state === "rejected") {
+          this.rejectPromise(promise, value.result);
+        }
+      };
+      if (value.state !== "pending") {
+        this.enqueueMicrotask("adopt", `promise #${promise.id}`, link);
+      } else {
+        value.reactions.push({
+          derived: promise,
+          label: `adopt #${promise.id}`,
+        });
+      }
+      return;
+    }
+    this.fulfillPromise(promise, value);
+  }
+
+  private flushReactions(promise: PromiseValue): void {
+    const reactions = promise.reactions.splice(0);
+    for (const reaction of reactions) {
+      this.enqueueMicrotask("then", reaction.label, () => {
+        this.runReaction(promise, reaction);
+      });
+    }
+  }
+
+  private runReaction(promise: PromiseValue, reaction: PromiseReaction): void {
+    try {
+      if (promise.state === "fulfilled") {
+        if (!reaction.onFulfilled) {
+          this.resolvePromise(reaction.derived, promise.result);
+          return;
+        }
+        const ret = this.callFunction(
+          reaction.onFulfilled,
+          [promise.result],
+          reaction.label,
+        );
+        this.resolvePromise(reaction.derived, ret);
+        return;
+      }
+      if (promise.state === "rejected") {
+        if (!reaction.onRejected) {
+          this.rejectPromise(reaction.derived, promise.result);
+          return;
+        }
+        const ret = this.callFunction(
+          reaction.onRejected,
+          [promise.result],
+          reaction.label,
+        );
+        this.resolvePromise(reaction.derived, ret);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.rejectPromise(reaction.derived, { kind: "string", value: message });
+    }
+  }
+
+  private promiseThenPublic(
+    promise: PromiseValue,
+    onFulfilled?: FnValue,
+    onRejected?: FnValue,
+  ): PromiseValue {
+    const derived = this.createPromise("pending");
+    const reactionLabel =
+      onRejected && !onFulfilled
+        ? `catch #${derived.id}`
+        : `then #${derived.id}`;
+    const hint = onFulfilled
+      ? hintFromCallback(onFulfilled)
+      : onRejected
+        ? hintFromCallback(onRejected)
+        : undefined;
+    const display = hint ? `${reactionLabel} · ${hint}` : reactionLabel;
+
+    const reaction: PromiseReaction = {
+      onFulfilled,
+      onRejected,
+      derived,
+      label: display,
+    };
+
+    if (promise.state === "pending") {
+      promise.reactions.push(reaction);
+    } else {
+      this.enqueueMicrotask("then", display, () => {
+        this.runReaction(promise, reaction);
+      });
+    }
+    return derived;
+  }
+
   private execStatement(stmt: Statement, env: Env): void {
     this.bump();
     switch (stmt.type) {
@@ -235,7 +419,6 @@ export class Interpreter {
         this.evalExpression(stmt.expression, env);
         return;
       case "FunctionDeclaration":
-        // Hoisted.
         return;
       case "VariableDeclaration":
         for (const decl of stmt.declarations) {
@@ -284,6 +467,8 @@ export class Interpreter {
         return this.evalMember(expr, env);
       case "CallExpression":
         return this.evalCall(expr, env);
+      case "NewExpression":
+        return this.evalNew(expr, env);
       case "ArrowFunctionExpression":
       case "FunctionExpression":
         return this.fnFromExpression(expr, env);
@@ -340,9 +525,14 @@ export class Interpreter {
       }
       case "TemplateLiteral": {
         if (expr.expressions.length > 0) {
-          throw new Error("Interpolated template literals are not supported yet");
+          throw new Error(
+            "Interpolated template literals are not supported yet",
+          );
         }
-        return { kind: "string", value: expr.quasis.map((q) => q.value.cooked ?? "").join("") };
+        return {
+          kind: "string",
+          value: expr.quasis.map((q) => q.value.cooked ?? "").join(""),
+        };
       }
       default:
         throw new Error(`Unsupported expression: ${(expr as Node).type}`);
@@ -364,15 +554,101 @@ export class Interpreter {
       throw new Error("Unsupported member property");
     }
     const object = this.evalExpression(expr.object as Expression, env);
+    const prop = expr.property.name;
+
     if (object.kind === "object" && object.name === "console") {
-      if (expr.property.name === "log") {
-        return { kind: "native", name: "console.log" };
+      if (prop === "log") return { kind: "native", name: "console.log" };
+    }
+    if (object.kind === "promiseCtor") {
+      if (prop === "resolve" || prop === "reject") {
+        return { kind: "promiseMethod", method: prop };
       }
     }
-    throw new Error(
-      `Unsupported member access: ${expr.property.name}`,
-    );
+    if (object.kind === "promise") {
+      if (prop === "then" || prop === "catch") {
+        return { kind: "promiseMethod", method: prop, target: object };
+      }
+    }
+    throw new Error(`Unsupported member access: ${prop}`);
   }
+
+  private evalNew(
+    expr: Extract<Expression, { type: "NewExpression" }>,
+    env: Env,
+  ): Value {
+    const callee = this.evalExpression(expr.callee as Expression, env);
+    if (callee.kind !== "promiseCtor") {
+      throw new Error("Only `new Promise(...)` is supported");
+    }
+    const args = expr.arguments.map((arg) => {
+      if (arg.type === "SpreadElement") {
+        throw new Error("Spread arguments are not supported");
+      }
+      return this.evalExpression(arg, env);
+    });
+    const executor = args[0];
+    if (!executor || executor.kind !== "fn") {
+      throw new Error("Promise executor must be a function");
+    }
+
+    const promise = this.createPromise("pending");
+    this.callPromiseExecutor(executor, promise);
+    return promise;
+  }
+
+  private callPromiseExecutor(executor: FnValue, promise: PromiseValue): void {
+    const child = createEnv(executor.env);
+    const resolveNative = this.makeHostCallback((value) => {
+      this.resolvePromise(promise, value ?? UNDEFINED);
+      return UNDEFINED;
+    }, "resolve");
+    const rejectNative = this.makeHostCallback((reason) => {
+      this.rejectPromise(promise, reason ?? UNDEFINED);
+      return UNDEFINED;
+    }, "reject");
+
+    this.bindParams(executor.params, [resolveNative, rejectNative], child);
+    this.pushStack("Promise executor", executor.line, "Promise executor");
+    try {
+      if (executor.expression && executor.body.type !== "BlockStatement") {
+        this.evalExpression(executor.body as Expression, child);
+      } else if (executor.body.type === "BlockStatement") {
+        this.hoistFunctions(executor.body.body, child);
+        for (const stmt of executor.body.body) {
+          this.execStatement(stmt, child);
+        }
+      }
+      this.popStack("Promise executor", "Promise executor");
+    } catch (err) {
+      if (this.timeline.at(-1)?.type !== "popStack") {
+        this.popStack("Promise executor", "Promise executor");
+      }
+      if (err instanceof ReturnSignal) {
+        return;
+      }
+      const message = err instanceof Error ? err.message : String(err);
+      this.rejectPromise(promise, { kind: "string", value: message });
+    }
+  }
+
+  private makeHostCallback(
+    impl: (value?: Value) => Value,
+    name: string,
+  ): Value {
+    // Store in a side table keyed by fn identity using a unique native-like wrapper
+    const host: FnValue = {
+      kind: "fn",
+      name,
+      params: [{ type: "Identifier", name: "value", start: 0, end: 0 } as Identifier],
+      body: { type: "BlockStatement", body: [], start: 0, end: 0 },
+      env: createEnv(null),
+      expression: false,
+    };
+    this.hostFns.set(host, impl);
+    return host;
+  }
+
+  private hostFns = new WeakMap<FnValue, (value?: Value) => Value>();
 
   private evalCall(
     expr: Extract<Expression, { type: "CallExpression" }>,
@@ -397,13 +673,64 @@ export class Interpreter {
       if (callee.name === "setTimeout") {
         return this.nativeSetTimeout(args, expr.loc?.start.line);
       }
+      if (callee.name === "queueMicrotask") {
+        return this.nativeQueueMicrotask(args);
+      }
+    }
+
+    if (callee.kind === "promiseMethod") {
+      if (callee.method === "resolve" && !callee.target) {
+        const value = args[0] ?? UNDEFINED;
+        if (value.kind === "promise") return value;
+        const p = this.createPromise("fulfilled");
+        p.result = value;
+        return p;
+      }
+      if (callee.method === "reject" && !callee.target) {
+        const p = this.createPromise("rejected");
+        p.result = args[0] ?? UNDEFINED;
+        return p;
+      }
+      if (callee.method === "then" && callee.target) {
+        const onFulfilled =
+          args[0] && args[0].kind === "fn" ? args[0] : undefined;
+        const onRejected =
+          args[1] && args[1].kind === "fn" ? args[1] : undefined;
+        return this.promiseThenPublic(callee.target, onFulfilled, onRejected);
+      }
+      if (callee.method === "catch" && callee.target) {
+        const onRejected =
+          args[0] && args[0].kind === "fn" ? args[0] : undefined;
+        return this.promiseThenPublic(callee.target, undefined, onRejected);
+      }
+      // Host resolve/reject on a specific promise used wrongly — ignore
     }
 
     if (callee.kind === "fn") {
+      const host = this.hostFns.get(callee);
+      if (host) {
+        return host(args[0]);
+      }
       return this.callFunction(callee, args, callee.name);
     }
 
     throw new Error("Value is not a function");
+  }
+
+  private nativeQueueMicrotask(args: Value[]): Value {
+    const callback = args[0];
+    if (!callback || callback.kind !== "fn") {
+      throw new Error("queueMicrotask requires a function");
+    }
+    const hint = hintFromCallback(callback);
+    const idPreview = String(this.nextMicroId);
+    const label = hint
+      ? `microtask #${idPreview} · ${hint}`
+      : `microtask #${idPreview}`;
+    this.enqueueMicrotask("queueMicrotask", label, () => {
+      this.callFunction(callback, [], label);
+    });
+    return UNDEFINED;
   }
 
   private nativeSetTimeout(args: Value[], callLine?: number): Value {
@@ -439,6 +766,9 @@ export class Interpreter {
   }
 
   private callFunction(fn: FnValue, args: Value[], frameLabel: string): Value {
+    const host = this.hostFns.get(fn);
+    if (host) return host(args[0]);
+
     const child = createEnv(fn.env);
     this.bindParams(fn.params, args, child);
     const frameName = fn.name && fn.name !== "anonymous" ? fn.name : frameLabel;
@@ -466,7 +796,6 @@ export class Interpreter {
         this.popStack(frameName, frameLabel);
         return err.value;
       }
-      // Ensure stack is balanced on failure for timeline clarity.
       if (this.timeline.at(-1)?.type !== "popStack") {
         this.popStack(frameName, frameLabel);
       }
@@ -484,7 +813,10 @@ export class Interpreter {
   }
 
   private evalBinary(operator: string, left: Value, right: Value): Value {
-    if (operator === "+" && (left.kind === "string" || right.kind === "string")) {
+    if (
+      operator === "+" &&
+      (left.kind === "string" || right.kind === "string")
+    ) {
       return {
         kind: "string",
         value: valueToLogString(left) + valueToLogString(right),
@@ -512,13 +844,30 @@ export class Interpreter {
       case ">=":
         return { kind: "boolean", value: l >= r };
       case "==":
-        return { kind: "boolean", value: valueToLogString(left) === valueToLogString(right) };
+        return {
+          kind: "boolean",
+          value: valueToLogString(left) === valueToLogString(right),
+        };
       case "===":
-        return { kind: "boolean", value: left.kind === right.kind && valueToLogString(left) === valueToLogString(right) };
+        return {
+          kind: "boolean",
+          value:
+            left.kind === right.kind &&
+            valueToLogString(left) === valueToLogString(right),
+        };
       case "!=":
-        return { kind: "boolean", value: valueToLogString(left) !== valueToLogString(right) };
+        return {
+          kind: "boolean",
+          value: valueToLogString(left) !== valueToLogString(right),
+        };
       case "!==":
-        return { kind: "boolean", value: !(left.kind === right.kind && valueToLogString(left) === valueToLogString(right)) };
+        return {
+          kind: "boolean",
+          value: !(
+            left.kind === right.kind &&
+            valueToLogString(left) === valueToLogString(right)
+          ),
+        };
       default:
         throw new Error(`Unsupported binary operator: ${operator}`);
     }

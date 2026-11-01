@@ -11,6 +11,7 @@ export type FrameItem = {
 export type PanelSnapshot = {
   callStack: FrameItem[];
   webApis: FrameItem[];
+  microtaskQueue: FrameItem[];
   callbackQueue: FrameItem[];
   /** Callback currently moving through the event loop (queue → stack). */
   transit: FrameItem | null;
