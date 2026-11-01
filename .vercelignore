@@ -1,0 +1,6 @@
+.review-frames
+docs/local
+node_modules
+dist
+.git
+.cursor

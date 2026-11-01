@@ -25,3 +25,4 @@ docs/local/
 *.njsproj
 *.sln
 *.sw?
+.vercel
