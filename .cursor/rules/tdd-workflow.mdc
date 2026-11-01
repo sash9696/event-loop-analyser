@@ -1,0 +1,26 @@
+---
+description: TDD workflow for Event Loop Analyser — model goldens before UI
+alwaysApply: true
+---
+
+# TDD Workflow (mandatory)
+
+Overview: `docs/ARCHITECTURE.md`.
+Working specs: `docs/local/TDD_WORKFLOW.md`, `REQUIREMENTS.md`, `TEST_CASES.md`, `EDGE_CASES.md`.
+
+## Rules
+
+1. **Simulator first.** Queue/stack/timer/promise behaviour lives in pure `sim/` (or equivalent). UI only plays a timeline.
+2. **Red → Green → Refactor.** For any behaviour change: add/adjust a failing test named with `TC-*` / `EC-*`, then implement the minimum, then refactor.
+3. **Console order is the oracle** for the supported subset. Never change expected logs to match a buggy sim.
+4. **No UI-only queue logic.** Panels must not invent stack/queue moves the timeline did not emit.
+5. **Phase gates.** Do not start Promises/microtasks until Phase 1 goldens (`TC-B*`, `TC-C01`–`TC-C12`, Loupe `TC-C08`) are green.
+6. **Bugs:** reproduce with a golden test first, then fix.
+
+## Allowed without full TDD
+
+Pure layout/CSS/copy. Anything that changes event order or supported APIs requires goldens.
+
+## PR bar
+
+Test IDs in the change description; full golden suite green; no skipped phase gates.
