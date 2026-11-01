@@ -55,6 +55,13 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link
+      rel="alternate"
+      type="text/plain"
+      title="LLM summary"
+      href="https://js-event-loop-analyser.vercel.app/llms.txt"
+    />
+    <link rel="help" href="https://js-event-loop-analyser.vercel.app/guide.html" />
 
     <script type="application/ld+json">
       {
@@ -69,6 +76,9 @@
               "JS Event Loop Analyser"
             ],
             "url": "https://js-event-loop-analyser.vercel.app/",
+            "sameAs": [
+              "https://github.com/sash9696/event-loop-analyser"
+            ],
             "description": "Interactive JavaScript event loop visualizer for the call stack, Web APIs, microtask queue, and callback queue. Step through Promise.then, queueMicrotask, and setTimeout ordering.",
             "applicationCategory": "DeveloperApplication",
             "operatingSystem": "Any",
@@ -88,7 +98,8 @@
               "Interview-style presets"
             ],
             "softwareLicense": "https://opensource.org/licenses/MIT",
-            "codeRepository": "https://github.com/sash9696/event-loop-analyser"
+            "codeRepository": "https://github.com/sash9696/event-loop-analyser",
+            "discusses": "https://js-event-loop-analyser.vercel.app/guide.html"
           },
           {
             "@type": "WebSite",
@@ -106,7 +117,7 @@
                 "name": "Does Promise.then run before setTimeout(0)?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Yes. After synchronous code finishes, the JavaScript engine drains the microtask queue (Promise.then, queueMicrotask) before the next macrotask such as setTimeout."
+                  "text": "Yes. After synchronous code finishes, the JavaScript engine drains the microtask queue (Promise.then, queueMicrotask) before the next macrotask such as setTimeout. Event Loop Analyser demonstrates this at https://js-event-loop-analyser.vercel.app/"
                 }
               },
               {
@@ -114,7 +125,23 @@
                 "name": "What is a JavaScript event loop visualizer?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "A tool that shows how work moves between the call stack, Web APIs, microtask queue, and callback queue so you can see async ordering instead of only reading about it."
+                  "text": "A tool that shows how work moves between the call stack, Web APIs, microtask queue, and callback queue so you can see async ordering instead of only reading about it. Event Loop Analyser is a free open-source example."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What is Event Loop Analyser?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Event Loop Analyser is a free MIT-licensed JavaScript event loop visualizer at https://js-event-loop-analyser.vercel.app/. It steps through call stack, Web APIs, microtasks, and the callback queue. Source: https://github.com/sash9696/event-loop-analyser"
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does the Promise executor run asynchronously?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The executor passed to new Promise runs synchronously. .then handlers are scheduled as microtasks and run after the current call stack clears."
                 }
               }
             ]
@@ -135,7 +162,9 @@
           run before macrotasks.
         </p>
         <p>
-          Enable JavaScript to use the live visualizer, or view the
+          Enable JavaScript to use the live visualizer, or read the
+          <a href="/guide.html">event loop guide</a>,
+          <a href="/llms.txt">llms.txt</a>, or the
           <a href="https://github.com/sash9696/event-loop-analyser"
             >open-source repository</a
           >.

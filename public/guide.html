@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      JavaScript Event Loop Explained — Guide | Event Loop Analyser
+    </title>
+    <meta
+      name="description"
+      content="Plain-language guide to the JavaScript event loop: call stack, microtasks, macrotasks, and why Promise.then runs before setTimeout(0). Links to the free Event Loop Analyser visualizer."
+    />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://js-event-loop-analyser.vercel.app/guide.html" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #14212b;
+        --muted: #5a6b78;
+        --line: #b7c5d0;
+        --stack: #1f6f8b;
+        --bg: #e8eef2;
+      }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        color: var(--ink);
+        background: linear-gradient(180deg, #e8eef2, #d5e2ea);
+        line-height: 1.55;
+      }
+      main {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      a {
+        color: var(--stack);
+      }
+      h1 {
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.5rem;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 2rem 0 0.6rem;
+      }
+      p,
+      li {
+        color: var(--ink);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      code,
+      pre {
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: 0.9em;
+      }
+      pre {
+        background: #0f1720;
+        color: #e7eef5;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+      }
+      .card {
+        background: #f7fafc;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 1rem 1.1rem;
+        margin: 1rem 0;
+      }
+      nav {
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "JavaScript Event Loop Explained",
+        "description": "Guide to call stack, microtasks, and macrotasks with a free interactive visualizer.",
+        "mainEntityOfPage": "https://js-event-loop-analyser.vercel.app/guide.html",
+        "author": {
+          "@type": "Organization",
+          "name": "Event Loop Analyser"
+        },
+        "about": [
+          "JavaScript event loop",
+          "microtask queue",
+          "Promise.then vs setTimeout"
+        ]
+      }
+    </script>
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a href="/">← Open the visualizer</a>
+        ·
+        <a href="https://github.com/sash9696/event-loop-analyser">GitHub</a>
+        ·
+        <a href="/llms.txt">llms.txt</a>
+      </nav>
+
+      <h1>JavaScript event loop, explained</h1>
+      <p class="muted">
+        A short guide tied to
+        <a href="/">Event Loop Analyser</a>, a free open-source visualizer.
+      </p>
+
+      <div class="card">
+        <strong>In one line:</strong> after sync code finishes, JavaScript drains
+        <em>all</em> microtasks before the next macrotask (like a
+        <code>setTimeout</code> callback).
+      </div>
+
+      <h2>The four places work sits</h2>
+      <ol>
+        <li><strong>Call stack</strong> — what’s running right now</li>
+        <li><strong>Web APIs</strong> — timers waiting (e.g. setTimeout)</li>
+        <li><strong>Microtask queue</strong> — Promise.then / catch, queueMicrotask</li>
+        <li><strong>Callback queue</strong> — macrotasks ready to run</li>
+      </ol>
+
+      <h2>Promise vs setTimeout(0)</h2>
+      <pre><code>console.log("s1");
+setTimeout(() => console.log("macro"), 0);
+Promise.resolve().then(() => console.log("micro"));
+console.log("s2");</code></pre>
+      <p>Console order: <code>s1</code>, <code>s2</code>, <code>micro</code>, <code>macro</code>.</p>
+      <p>
+        <a href="/">Step through this live</a> in Event Loop Analyser (preset:
+        “Promise vs timeout”).
+      </p>
+
+      <h2>What Event Loop Analyser is</h2>
+      <p>
+        An interactive Loupe-style tool: paste JavaScript, press Run or Step,
+        and watch panels update. It teaches interview-style ordering for a
+        supported subset of JS (timers + Promises + queueMicrotask). MIT
+        licensed.
+      </p>
+      <ul>
+        <li>App: <a href="https://js-event-loop-analyser.vercel.app/">js-event-loop-analyser.vercel.app</a></li>
+        <li>Code: <a href="https://github.com/sash9696/event-loop-analyser">github.com/sash9696/event-loop-analyser</a></li>
+        <li>AI summary: <a href="/llms.txt">/llms.txt</a></li>
+      </ul>
+
+      <h2>FAQ</h2>
+      <p><strong>Does the Promise executor run async?</strong> No — it runs synchronously. Handlers passed to <code>.then</code> run as microtasks.</p>
+      <p><strong>Is this a full browser engine?</strong> No — it’s a teaching simulator. Unsupported syntax errors instead of guessing.</p>
+    </main>
+  </body>
+</html>

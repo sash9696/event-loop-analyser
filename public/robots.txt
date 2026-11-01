@@ -1,4 +1,44 @@
+# Event Loop Analyser — crawl policy
+# AI / answer-engine crawlers are welcome.
+
 User-agent: *
 Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+# Machine-readable summaries for LLMs:
+# https://js-event-loop-analyser.vercel.app/llms.txt
+# https://js-event-loop-analyser.vercel.app/llms-full.txt
 
 Sitemap: https://js-event-loop-analyser.vercel.app/sitemap.xml

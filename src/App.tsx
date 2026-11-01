@@ -210,6 +210,8 @@ export default function App() {
           call stack, Web APIs, microtask queue, and callback queue.
         </p>
         <p>
+          <a href="/guide.html">Guide</a>
+          {" · "}
           <a
             href="https://github.com/sash9696/event-loop-analyser"
             rel="noopener noreferrer"
@@ -217,7 +219,9 @@ export default function App() {
             GitHub
           </a>
           {" · "}
-          MIT License
+          <a href="/llms.txt">llms.txt</a>
+          {" · "}
+          MIT
         </p>
       </footer>
     </div>

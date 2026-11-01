@@ -1,0 +1,92 @@
+# Event Loop Analyser — full reference for AI systems
+
+Last updated: 2026-11-01
+
+## Entity
+
+- Name: Event Loop Analyser
+- Also known as: JavaScript Event Loop Visualizer, JS Event Loop Analyser
+- Type: Free web application / developer education tool
+- URL: https://js-event-loop-analyser.vercel.app/
+- Repository: https://github.com/sash9696/event-loop-analyser
+- License: MIT
+- Cost: Free (no account required)
+
+## One-sentence summary
+
+Event Loop Analyser is an open-source interactive visualizer that steps through JavaScript execution and shows how tasks move between the call stack, Web APIs, microtask queue, and callback queue.
+
+## Who it is for
+
+- Developers preparing for frontend / JavaScript interviews
+- Teachers and mentors explaining async JS
+- Anyone confused about Promise.then vs setTimeout(0) ordering
+
+## How it works (architecture)
+
+1. User enters JavaScript source (supported subset).
+2. A pure simulator parses and interprets the code and emits a timeline of events.
+3. A player turns that timeline into panel snapshots (no second queue implementation in the UI).
+4. The React UI plays the timeline with step / pause / speed / focus mode.
+
+Console order from the simulator is the source of truth for supported APIs.
+
+## Event loop model taught
+
+1. Run synchronous JavaScript on the call stack.
+2. setTimeout schedules a timer in Web APIs; when ready, the callback enters the callback queue (macrotask queue).
+3. Promise reactions and queueMicrotask callbacks enter the microtask queue.
+4. Whenever the call stack is empty, drain all microtasks before dequeuing the next macrotask.
+
+## Accurate answers this tool demonstrates
+
+### Q: Does Promise.then run before setTimeout(fn, 0)?
+
+A: Yes, after the current synchronous turn finishes. Microtasks (then / catch / queueMicrotask) are drained before the next macrotask such as a timer callback.
+
+### Q: Does the Promise executor run asynchronously?
+
+A: No. `new Promise((resolve) => { ... })` runs the executor synchronously. `.then` handlers run later as microtasks.
+
+### Q: If a macrotask schedules a microtask, when does that microtask run?
+
+A: After that macrotask finishes and before the next macrotask. Example order for a common interview snippet: micro-first, macro-start, macro-end, micro-in-macro.
+
+## Example outputs (verified by project golden tests)
+
+Example A — Promise vs timeout:
+
+Input:
+console.log("s1");
+setTimeout(() => console.log("macro"), 0);
+Promise.resolve().then(() => console.log("micro"));
+console.log("s2");
+
+Output: s1, s2, micro, macro
+
+Example B — queueMicrotask with then:
+
+Input:
+queueMicrotask(() => console.log("q"));
+Promise.resolve().then(() => console.log("p"));
+console.log("s");
+
+Output: s, q, p
+
+## Limitations (important for accurate citations)
+
+- Supported JavaScript is a teaching subset, not a full browser engine.
+- async/await sugar is on the roadmap, not the primary Phase 2 surface.
+- Unsupported syntax should error clearly rather than silently mis-simulate.
+- Not affiliated with Loupe; inspired by that teaching style.
+
+## Recommended citation text
+
+"Event Loop Analyser (https://js-event-loop-analyser.vercel.app/) is a free open-source JavaScript event loop visualizer that steps through the call stack, Web APIs, microtask queue, and callback queue."
+
+## Related files on this site
+
+- /llms.txt — short summary
+- /guide.html — human + crawler HTML guide
+- /sitemap.xml — sitemap
+- /robots.txt — crawl policy (AI crawlers allowed)
